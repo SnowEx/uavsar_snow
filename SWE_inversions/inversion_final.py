@@ -29,7 +29,7 @@ def insar_swe(delta_phase, inc_angle, permittivity = None, density = None,
         used if permittivity is not provided. See references Guneriussen et al.
         2001 [DOI: 10.1109/36.957273] and Webb et al. 2021 [10.3390/rs13224617]
     wavelength : float
-        Radar wavelength [m]. Default value of ~0.24 m is for UAVSAR L-band.
+        Radar wavelength [m]. Default value of 0.238403545 m is for UAVSAR L-band.
 
     Returns
     -------
@@ -61,7 +61,6 @@ def insar_swe(delta_phase, inc_angle, permittivity = None, density = None,
         perm = permittivity
 
     # Calculate SWE change
-    delta_z = (-delta_phase * wavelength) /
-              (4 * np.pi * (np.cos(inc_angle) - np.sqrt(perm - np.sin(inc_angle)**2)))
+    delta_z = (-delta_phase * wavelength) / (4 * np.pi * (np.cos(inc_angle) - np.sqrt(perm - np.sin(inc_angle)**2)))
 
     return delta_z
