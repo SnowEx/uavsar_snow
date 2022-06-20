@@ -34,7 +34,7 @@ def depth_from_phase(delta_phase, inc_angle, permittivity = None,
 
     Returns
     -------
-    delta_z : NumPy array, change in snow depth
+    delta_z : NumPy array, change in snow depth [m]
     """
     # Check for either permittivity or density
     if permittivity == None and density == None:
