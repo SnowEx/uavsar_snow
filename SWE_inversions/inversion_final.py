@@ -1,7 +1,7 @@
 import numpy as np
 
 def insar_swe(delta_phase, inc_angle, permittivity=None, density=None,
-              method='guneriussen2001', wavelength=0.24)
+              method='guneriussen2001', wavelength=0.238403545)
 """
 Calculates change in SWE from SAR phase change. Requires either permittivity
 data or density data and selection of the method to estimate permittivity from
