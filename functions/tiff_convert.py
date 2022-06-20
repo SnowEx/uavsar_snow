@@ -161,6 +161,9 @@ def grd_tiff_convert(in_fp, out_dir, ann_fp = None, overwrite = 'user'):
     else:
         raise Exception('Can only handle one or two extensions on input file')
 
+    if type == 'llh' or type == 'lkv':
+        type = f'{type}_1_2x2_mag'
+
     # Find annotation file in same directory if no user given one
     if not ann_fp:
         if subtype:
@@ -184,8 +187,8 @@ def grd_tiff_convert(in_fp, out_dir, ann_fp = None, overwrite = 'user'):
         raise Exception('Can not convert zipped directories. Unzip first.')
     if type == 'dat' or type == 'kmz' or type == 'kml' or type == '.png' or type == 'tif':
         raise Exception(f'Can not handle {type} products')
-    if type == 'slc' or type == 'mlc':
-        raise Exception('Unable to convert slant range products to WGS84. Download and convert .grd file.')
+    # if type == 'slc' or type == 'mlc':
+    #     raise Exception('Unable to convert slant range products to WGS84. Download and convert .grd file.')
     if subtype == 'kmz':
         raise Exception('Can not handle kmz interferograms.')
     if type == 'ann':
