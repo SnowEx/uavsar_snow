@@ -43,6 +43,13 @@ def insar_swe(delta_phase, inc_angle, permittivity = None, density = None,
         if type(i) == np.ndarray:
             if i.shape != delta_phase.shape:
                 raise ValueError('All raster datasets must be the same shape.')
+    # Check to make sure permittivity has no values of 1 or 1.0
+    # This is not likely for real data but messes with the calculation
+    if type(permittivity) == np.ndarray:
+        if 1 in permittivity or 1.0 in permittivity:
+            raise ValueError('Permittivity array cannot contain values equal to 1.')
+    elif permittivity == 1:
+        raise ValueError('Permittivity cannot equal 1.')
 
     # Calculate permittivity with density if perm. is not directly provided
     if not permittivity:
