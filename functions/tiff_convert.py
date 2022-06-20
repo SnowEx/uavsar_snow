@@ -162,7 +162,7 @@ def grd_tiff_convert(in_fp, out_dir, ann_fp = None, overwrite = 'user'):
         raise Exception('Can only handle one or two extensions on input file')
 
     if type == 'llh' or type == 'lkv':
-        type = f'{type}_1_2x2_mag'
+        type = f'{type}_1_2x8'
 
     # Find annotation file in same directory if no user given one
     if not ann_fp:
