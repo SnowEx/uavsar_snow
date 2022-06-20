@@ -3,9 +3,9 @@ import numpy as np
 def insar_swe(delta_phase, inc_angle, permittivity = None, density = None,
               method = 'guneriussen2001', wavelength = 0.238403545):
     """
-    Calculates change in SWE from SAR phase change. Requires either permittivity
-    data or density data and selection of the method to estimate permittivity
-    from density.
+    Calculates change in snow depth from SAR phase change. Requires either 
+    permittivity data or density data and selection of the method to estimate 
+    permittivity from density.
 
     Parameters
     ----------
@@ -33,7 +33,7 @@ def insar_swe(delta_phase, inc_angle, permittivity = None, density = None,
 
     Returns
     -------
-    delta_z : NumPy array, change in SWE
+    delta_z : NumPy array, change in snow depth
     """
     # Check for either permittivity or density
     if permittivity == None and density == None:
@@ -60,7 +60,7 @@ def insar_swe(delta_phase, inc_angle, permittivity = None, density = None,
     else:
         perm = permittivity
 
-    # Calculate SWE change
+    # Calculate snow depth change
     delta_z = (-delta_phase * wavelength) / (4 * np.pi * (np.cos(inc_angle) - np.sqrt(perm - np.sin(inc_angle)**2)))
 
     return delta_z
