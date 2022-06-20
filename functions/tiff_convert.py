@@ -187,8 +187,8 @@ def grd_tiff_convert(in_fp, out_dir, ann_fp = None, overwrite = 'user'):
         raise Exception('Can not convert zipped directories. Unzip first.')
     if type == 'dat' or type == 'kmz' or type == 'kml' or type == '.png' or type == 'tif':
         raise Exception(f'Can not handle {type} products')
-    # if type == 'slc' or type == 'mlc':
-    #     raise Exception('Unable to convert slant range products to WGS84. Download and convert .grd file.')
+    if type == 'slc' or type == 'mlc':
+        raise Exception('Unable to convert slant range products to WGS84. Download and convert .grd file.')
     if subtype == 'kmz':
         raise Exception('Can not handle kmz interferograms.')
     if type == 'ann':
@@ -219,6 +219,8 @@ def grd_tiff_convert(in_fp, out_dir, ann_fp = None, overwrite = 'user'):
         #pd.DataFrame.from_dict(desc).to_csv('../data/test.csv')
         if 'flight id for pass 2' in desc.keys():
             mode = 'insar'
+        elif 'slc' not in type or '_2x8' not in type:
+            mode = 'slc'
         else:
             mode = 'polsar'
         log.info(f'Working with {mode}')
@@ -249,19 +251,19 @@ def grd_tiff_convert(in_fp, out_dir, ann_fp = None, overwrite = 'user'):
         nrow = desc[f'{type}.set_rows']['value']
         ncol = desc[f'{type}.set_cols']['value']
         log.debug(f'rows: {nrow} x cols: {ncol} pixels')
-
         # Ground projected images
-        # Delta latitude and longitude
-        dlat = desc[f'{type}.row_mult']['value']
-        dlon = desc[f'{type}.col_mult']['value']
-        log.debug(f'latitude delta: {dlat}, longitude delta: {dlon} deg/pixel')
-        # Upper left corner coordinates
-        lat1 = desc[f'{type}.row_addr']['value']
-        lon1 = desc[f'{type}.col_addr']['value']
-        log.debug(f'Ref Latitude: {lat1}, Longitude: {lon1} degrees')
+        if mode != 'slc':
+            # Delta latitude and longitude
+            dlat = desc[f'{type}.row_mult']['value']
+            dlon = desc[f'{type}.col_mult']['value']
+            log.debug(f'latitude delta: {dlat}, longitude delta: {dlon} deg/pixel')
+            # Upper left corner coordinates
+            lat1 = desc[f'{type}.row_addr']['value']
+            lon1 = desc[f'{type}.col_addr']['value']
+            log.debug(f'Ref Latitude: {lat1}, Longitude: {lon1} degrees')
 
-        # Lat1/lon1 are already the center so for geotiff were good to go.
-        t = Affine.translation(float(lon1), float(lat1))* Affine.scale(float(dlon), float(dlat))
+            # Lat1/lon1 are already the center so for geotiff were good to go.
+            t = Affine.translation(float(lon1), float(lat1))* Affine.scale(float(dlon), float(dlat))
 
         # Get data type specific data
         bytes = desc[f'{type}.val_size']['value']
@@ -279,38 +281,65 @@ def grd_tiff_convert(in_fp, out_dir, ann_fp = None, overwrite = 'user'):
         else:
             if com:
                 dtype = np.dtype([('real', '<f4'), ('imaginary', '<f4')])
+            elif '2x8' in type:
+                dtype = np.dtype('<f')
             else:
                 dtype = np.dtype([('real', '<f{}'.format(bytes))])
+
+
         log.debug(f'Data type = {dtype}')
         # Read in binary data
         z = np.fromfile(in_fp, dtype = dtype)
 
-        # Reshape it to match what the text file says the image is
-        z = z.reshape(nrow, ncol)
+        if mode != 'slc':
+            # Reshape it to match what the text file says the image is
+            z = z.reshape(nrow, ncol)
 
-        # Build the transform and CRS
-        crs = CRS.from_user_input("EPSG:4326")
+            # Build the transform and CRS
+            crs = CRS.from_user_input("EPSG:4326")
+            for comp in ['real', 'imaginary']:
+                if comp in z.dtype.names:
+                    d = z[comp]
+                    # Change zeros and -10,000 to nans based on documentation.
+                    d[d==0]= np.nan
+                    d[d==-10000]= np.nan
+                    if type == 'slope':
+                        d[d == np.nanmin(d)] = np.nan
 
-        for comp in ['real', 'imaginary']:
-            if comp in z.dtype.names:
-                d = z[comp]
+                    log.debug(f'Writing {comp} component to {out_fp}...')
+                    dataset = rasterio.open(
+                        out_fp,
+                        'w+',
+                        driver='GTiff',
+                        height=d.shape[0],
+                        width=d.shape[1],
+                        count=1,
+                        dtype=d.dtype,
+                        crs=crs,
+                        transform=t,
+                    )
+                    # Write out the data
+                    dataset.write(d, 1)
+
+                    dataset.close()
+
+        else:
+            for i, comp in enumerate(['lat','long','elev']):
+                d = z[i::3]
+                d = d.reshape(nrow, ncol)
                 # Change zeros and -10,000 to nans based on documentation.
                 d[d==0]= np.nan
                 d[d==-10000]= np.nan
-                if type == 'slope':
-                    d[d == np.nanmin(d)] = np.nan
 
                 log.debug(f'Writing {comp} component to {out_fp}...')
                 dataset = rasterio.open(
-                    out_fp,
+                    f'{dirname(out_fp)}/{comp}_{basename(out_fp)}',
                     'w+',
                     driver='GTiff',
                     height=d.shape[0],
                     width=d.shape[1],
                     count=1,
                     dtype=d.dtype,
-                    crs=crs,
-                    transform=t,
                 )
                 # Write out the data
                 dataset.write(d, 1)
