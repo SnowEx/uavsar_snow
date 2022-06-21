@@ -76,3 +76,4 @@ def calc_uavsar_inc(dem, lkv_x, lkv_y, lkv_z, pixel_size=5.556):
     inc = arccos_theta(inc_cos)
 
     return np.rad2deg(inc)
+    
