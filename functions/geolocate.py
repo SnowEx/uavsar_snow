@@ -53,7 +53,7 @@ def geocodeUsingGdalWarp(infile, latfile, lonfile, outfile,
         spacing = [None, None]
     warpOptions = gdal.WarpOptions(format=fmt,
                                 xRes=spacing[0], yRes=spacing[0],
-                                dstSRS=outsrs, outputBounds = bounds, 
+                                dstSRS=outsrs, outputBounds = bounds, dstNodata = -9999,
                                 resampleAlg=method, geoloc=True)
     gdal.Warp(outfile, tempvrtname, options=warpOptions)
     os.remove('temp_ele.vrt')
