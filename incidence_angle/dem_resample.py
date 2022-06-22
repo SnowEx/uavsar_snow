@@ -6,7 +6,7 @@ import rioxarray as rxr # for the extension to load
 import xarray as xr
 
 
-def reample_to_uavsar_dem(path_uavsar_dem, path_new_dem):
+def resample_to_uavsar_dem(path_uavsar_dem, path_new_dem):
     """
     Resamples a new dem to the same extent and resolution as the UAVSAR DEM
 

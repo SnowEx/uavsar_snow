@@ -6,3 +6,4 @@ isce.log
 geolocate/__pycache__/geolocate.cpython-310.pyc
 functions/__pycache__/geocoding.cpython-310.pyc
 incidence_angle/jack_incidence_angle.ipynb
+incidence_angle/__pycache__/dem_resample.cpython-310.pyc
