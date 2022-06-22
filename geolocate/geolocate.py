@@ -52,9 +52,9 @@ def geocodeUsingGdalWarp(infile, latfile, lonfile, outfile,
     if spacing is None:
         spacing = [None, None]
     warpOptions = gdal.WarpOptions(format=fmt,
-                                   xRes=spacing[0], yRes=spacing[0],
-                                   dstSRS=outsrs, outputBounds = bounds, 
-                                   resampleAlg=method, geoloc=True)
+                                xRes=spacing[0], yRes=spacing[0],
+                                dstSRS=outsrs, outputBounds = bounds, 
+                                resampleAlg=method, geoloc=True)
     gdal.Warp(outfile, tempvrtname, options=warpOptions)
     os.remove('temp_ele.vrt')
 
@@ -186,7 +186,13 @@ def geolocate_uavsar(in_fp, ann_fp, out_dir, llh_fp):
                                 lonfile = longf,
                                 outfile = out_f,
                                 spacing=[.00005556,.00005556])
+
             res_f.append(out_f)
+
+        if ext == 'unw':
+            print('Ignore error message: Unable to compute bounds. It is related\n\
+                to the pixels created by the conversion along the edge of topography.\n\
+                Error message is known and should not be an issue.')
         
     shutil.rmtree(tmp_dir)
 
