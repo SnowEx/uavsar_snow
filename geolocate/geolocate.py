@@ -150,17 +150,19 @@ def geolocate_uavsar(in_fp, ann_fp, out_dir, llh_fp):
         d_arrs[f'z'] = arr[2::3].reshape(nrows, ncols)
 
     elif ext == 'vrt':
-        second_ext = basename(in_fp).split('.')[-2]
-        dtype = float
-        if second_ext == 'unw':
-            with rio.open(in_fp) as src:
-                # 1st band is amplitude, 2nd band is unwrapped phase
-                arr = src.read(2)
-        else:
-            with rio.open(in_fp) as src:
-                arr = src.read(1)
-        d_arrs = {}
-        d_arrs[second_ext] = arr
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message="Dataset has no geotransform, gcps, or rpcs. The identity matrix be returned.")
+            second_ext = basename(in_fp).split('.')[-2]
+            dtype = float
+            if second_ext == 'unw':
+                with rio.open(in_fp) as src:
+                    # 1st band is amplitude, 2nd band is unwrapped phase
+                    arr = src.read(2)
+            else:
+                with rio.open(in_fp) as src:
+                    arr = src.read(1)
+            d_arrs = {}
+            d_arrs[second_ext] = arr
 
     # Save out tifs
     with warnings.catch_warnings():
