@@ -67,12 +67,12 @@ def geolocate_uavsar(in_fp, ann_fp, out_dir, llh_fp):
     vrts = glob(join(tmp_dir, '*.vrt'))
     latf = [f for f in vrts if basename(f) == 'llh.lat.vrt'][0]
     longf = [f for f in vrts if basename(f) == 'llh.long.vrt'][0]
-    for f in vrts:
-        geocodeUsingGdalWarp(infile = f,
-                        latfile = latf,
-                        lonfile = longf,
-                        outfile = join(out_dir, basename(f).replace('vrt','tif')),
-                        spacing=[.00005556,.00005556])
+    # for f in vrts:
+    #     geocodeUsingGdalWarp(infile = f,
+    #                     latfile = latf,
+    #                     lonfile = longf,
+    #                     outfile = join(out_dir, basename(f).replace('vrt','tif')),
+    #                     spacing=[.00005556,.00005556])
 
     profile = {
         'driver': 'GTiff',
@@ -86,24 +86,43 @@ def geolocate_uavsar(in_fp, ann_fp, out_dir, llh_fp):
         }
 
     if ext == 'slc':
+        os.makedirs(tmp_dir, exist_ok=True)
         spacing = in_fp.replace(f'.{ext}','')[-3:]
-        dtype = desc['SLC Bytes Per Pixel']['value']
-        nrows = desc['slc_1_{spacing} Rows']['value']
-        ncols = desc['slc_1_{spacing} Columns']['value']
+        dtype = desc['slc bytes per pixel']['value']
+        nrows = desc[f'slc_1_{spacing} rows']['value']
+        ncols = desc[f'slc_1_{spacing} columns']['value']
         if dtype == 8:
             dtype = np.complex64
         if dtype == 16:
             dtype = np.complex128
-        arr = np.fromfile(f, dtype = dtype).reshape(nrows, ncols)
+        arr = np.fromfile(in_fp, dtype = dtype).reshape(nrows, ncols)
+        
+        d_arrs = {}
+        d_arrs['real'] = arr.real
+        d_arrs['imag'] = arr.real
+
 
          # Save out tifs
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", message="Dataset has no geotransform, gcps, or rpcs. The identity matrix be returned.")
-            with rio.open(join(tmp_dir, basename(in_fp) + '.tif'), 'w', **profile) as dst:
-                dst.write(arr.astype(arr.dtype), 1)
+            for name, arr in d_arrs.items():
+                with rio.open(join(tmp_dir, basename(in_fp) + f'.{name}.tif'), 'w', **profile) as dst:
+                    dst.write(arr.astype(arr.dtype), 1)
         
+        tifs = glob(join(tmp_dir, f'*{ext}*.tif')) # list all .ext files
+        for tiff in tifs: # loop to open and translate .ext to .vrt, and save .vrt using gdal
+            raster_dataset = gdal.Open(tiff, gdal.GA_ReadOnly) # read in rasters
+            raster = gdal.Translate(join(tmp_dir, basename(tiff).replace('.tif','.vrt')), raster_dataset, format = 'VRT', outputType = gdal.GDT_Float64)
+        raster_dataset = None
 
-
+        vrts = glob(join(tmp_dir, f'*{ext}*.vrt'))
+        for f in vrts:
+            print(f)
+            geocodeUsingGdalWarp(infile = f,
+                                latfile = latf,
+                                lonfile = longf,
+                                outfile = join(out_dir, basename(f).replace('vrt','tif')),
+                                spacing=[.00005556,.00005556])
 
     if ext == 'lkv':
         spacing = in_fp.replace(f'.{ext}','')[-3:]
@@ -126,18 +145,6 @@ def geolocate_uavsar(in_fp, ann_fp, out_dir, llh_fp):
                 tmp_tiff_fp = join(tmp_dir, name + '.tif')
                 with rio.open(tmp_tiff_fp, 'w', **profile) as dst:
                     dst.write(arr.astype(arr.dtype), 1)
-            
-        raster_dataset = gdal.Open(tmp_tiff_fp, gdal.GA_ReadOnly) # read in rasters
-        vrt_tmp_fp = join(tmp_dir, basename(tmp_tiff_fp).replace('.tif','.vrt'))
-        raster = gdal.Translate(vrt_tmp_fp, raster_dataset, format = 'VRT', outputType = gdal.GDT_Float32)
-        raster_dataset = None
-
-        geocodeUsingGdalWarp(infile = vrt_tmp_fp,
-                            latfile = latf,
-                            lonfile = longf,
-                            outfile = join(out_dir, basename(vrt_tmp_fp).replace('vrt','tif')),
-                            spacing=[.00005556,.00005556])
-
 
         # Add VRT file for each tif
         tifs = glob(join(tmp_dir, f'{ext}*.tif')) # list all .ext files
@@ -154,6 +161,6 @@ def geolocate_uavsar(in_fp, ann_fp, out_dir, llh_fp):
                             outfile = join(out_dir, basename(f).replace('vrt','tif')),
                             spacing=[.00005556,.00005556])
         
-        shutil.rmtree(tmp_dir)
+    shutil.rmtree(tmp_dir)
 
         
