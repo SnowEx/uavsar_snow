@@ -31,6 +31,7 @@ def geolocate_uavsar(in_fp, ann_fp, out_dir, llh_fp):
 
     tmp_dir = join(out_dir, 'tmp')
     os.makedirs(tmp_dir, exist_ok=True)
+        
     nrows = desc[f'llh_1_2x8.set_rows']['value']
     ncols = desc[f'llh_1_2x8.set_cols']['value']
     dt = np.dtype('<f')
@@ -81,23 +82,33 @@ def geolocate_uavsar(in_fp, ann_fp, out_dir, llh_fp):
         'dtype':'float32'
         }
 
-    spacing = in_fp.replace(f'.{ext}','')[-3:]
-    nrows = desc[f'{ext}_1_{spacing} rows']['value']
-    ncols = desc[f'{ext}_1_{spacing} columns']['value']
     if ext == 'slc':
+        spacing = in_fp.replace(f'.{ext}','')[-3:]
+        nrows = desc[f'{ext}_1_{spacing} rows']['value']
+        ncols = desc[f'{ext}_1_{spacing} columns']['value']
         dtype = np.complex64
         arr = np.fromfile(in_fp, dtype = dtype).reshape(nrows, ncols)
         d_arrs = {}
         d_arrs['real'] = arr.real
-        d_arrs['imag'] = arr.real
+        d_arrs['imag'] = arr.imag
 
-    if ext == 'lkv':
+    elif ext == 'lkv':
+        spacing = in_fp.replace(f'.{ext}','')[-3:]
+        nrows = desc[f'{ext}_1_{spacing} rows']['value']
+        ncols = desc[f'{ext}_1_{spacing} columns']['value']
         dtype = np.dtype('<f')
         arr = np.fromfile(in_fp, dtype = dtype)
         d_arrs = {}
         d_arrs[f'y'] = arr[::3].reshape(nrows, ncols)
         d_arrs[f'x'] = arr[1::3].reshape(nrows, ncols)
         d_arrs[f'z'] = arr[2::3].reshape(nrows, ncols)
+
+    elif ext == 'unw':
+        dtype = float
+        arr = np.fromfile(in_fp, dtype = dtype).reshape(nrows, ncols)
+        d_arrs = {}
+        d_arrs['real'] = arr.real
+        d_arrs['imag'] = arr.imag
 
     # Save out tifs
     with warnings.catch_warnings():
