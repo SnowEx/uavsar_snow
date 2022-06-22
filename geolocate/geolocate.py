@@ -161,6 +161,7 @@ def geolocate_uavsar(in_fp, ann_fp, out_dir, llh_fp):
                 with rio.open(in_fp) as src:
                     arr = src.read(1)
             d_arrs = {}
+            ext = second_ext
             d_arrs[second_ext] = arr
 
     # Save out tifs
@@ -169,8 +170,6 @@ def geolocate_uavsar(in_fp, ann_fp, out_dir, llh_fp):
         for name, arr in d_arrs.items():
             with rio.open(join(tmp_dir, basename(in_fp) + f'.{name}.tif'), 'w', **profile) as dst:
                 dst.write(arr.astype(arr.dtype), 1)
-    
-    if ext != 'vrt':
 
         tifs = glob(join(tmp_dir, f'*{ext}*.tif')) # list all .ext files
         for tiff in tifs: # loop to open and translate .ext to .vrt, and save .vrt using gdal
@@ -179,23 +178,6 @@ def geolocate_uavsar(in_fp, ann_fp, out_dir, llh_fp):
         raster_dataset = None
 
         vrts = glob(join(tmp_dir, f'*{ext}*.vrt'))
-        res_f = []
-        for f in vrts:
-            out_f = join(out_dir, basename(f).replace('vrt','tif'))
-            geocodeUsingGdalWarp(infile = f,
-                                latfile = latf,
-                                lonfile = longf,
-                                outfile = out_f,
-                                spacing=[.00005556,.00005556])
-            res_f.append(out_f)
-    else:
-        tifs = glob(join(tmp_dir, f'*{second_ext}*.tif')) # list all .ext files
-        for tiff in tifs: # loop to open and translate .ext to .vrt, and save .vrt using gdal
-            raster_dataset = gdal.Open(tiff, gdal.GA_ReadOnly) # read in rasters
-            raster = gdal.Translate(join(tmp_dir, basename(tiff).replace('.tif','.vrt')), raster_dataset, format = 'VRT', outputType = gdal.GDT_Float64)
-        raster_dataset = None
-
-        vrts = glob(join(tmp_dir, f'*{second_ext}*.vrt'))
         res_f = []
         for f in vrts:
             out_f = join(out_dir, basename(f).replace('vrt','tif'))
