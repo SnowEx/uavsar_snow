@@ -74,11 +74,18 @@ def geolocate_uavsar(in_fp, ann_fp, out_dir, llh_fp):
                         outfile = join(out_dir, basename(f).replace('vrt','tif')),
                         spacing=[.00005556,.00005556])
 
+    if ext == 'slc':
+        spacing = in_fp.replace(f'.{ext}','')[-3:]
+        dtype = desc['SLC Bytes Per Pixel']['value']
+        nrows = desc['slc_1_{spacing} Rows']['value']
+        ncols = desc['slc_1_{spacing} Columns']['value']
+
     if ext == 'lkv':
+        spacing = in_fp.replace(f'.{ext}','')[-3:]
         tmp_dir = join(out_dir, 'tmp')
         os.makedirs(tmp_dir, exist_ok=True)
-        nrows = desc[f'{ext}_1_2x8.set_rows']['value']
-        ncols = desc[f'{ext}_1_2x8.set_cols']['value']
+        nrows = desc[f'{ext}_1_{spacing}.set_rows']['value']
+        ncols = desc[f'{ext}_1_{spacing}.set_cols']['value']
         dt = np.dtype('<f')
 
         arr = np.fromfile(in_fp, dtype = dt)

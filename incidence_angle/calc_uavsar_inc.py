@@ -1,5 +1,5 @@
 import numpy as np
-import rasterio as io
+import rasterio as rio
 
 
 def arccos_theta(v):
@@ -9,11 +9,13 @@ def arccos_theta(v):
         return np.arccos(2-v)
     elif v < -1 and v > -3:
         return np.arccos(-1 + 0.000001) - np.arccos(2+v)
+    else:
+        return np.nan
 
 arccos_theta = np.vectorize(arccos_theta)
 
 
-def calc_uavsar_inc(dem, lkv_x, lkv_y, lkv_z, pixel_size=5.556):
+def calc_inc_angle(dem, lkv_x, lkv_y, lkv_z, pixel_size=5.556):
     """
     Calculates UAVSAR incidence angle from DEM and look vector components.
 
@@ -32,9 +34,9 @@ def calc_uavsar_inc(dem, lkv_x, lkv_y, lkv_z, pixel_size=5.556):
         Incidence angle in degrees.
     """
     # Calculate gradient of DEM
-    if type(dem) == 'str':
+    if type(dem) == str:
         with rio.open(dem) as src:
-            dem_arr = dem.read(1)
+            dem_arr = src.read(1)
             dx, dy = np.gradient(dem_arr, pixel_size)
             dem_shape = dem_arr.shape
     elif type(dem) == np.ndarray:
@@ -48,10 +50,8 @@ def calc_uavsar_inc(dem, lkv_x, lkv_y, lkv_z, pixel_size=5.556):
     components = [lkv_x, lkv_y, lkv_z]
     directions = ['x','y','z']
 
-    for vector in components:
-        comp_idx = components.index(vector)
-        
-        if type(vector) == 'str':
+    for comp_idx, vector in enumerate(components):
+        if type(vector) == str:
             with rio.open(vector) as src:
                 lkv[directions[comp_idx]] = src.read(1)
         elif type(vector) == np.ndarray:
