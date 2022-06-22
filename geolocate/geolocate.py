@@ -5,7 +5,7 @@ from os.path import join, basename, dirname
 import warnings
 import numpy as np
 import rasterio as rio
-from osgeo import gdal
+from osgeo import gdal, osr
 from uavsar_pytools.convert.tiff_conversion import read_annotation
 
 def geocodeUsingGdalWarp(infile, latfile, lonfile, outfile,
