@@ -1,3 +1,8 @@
 *.DS_Store
 jemez_slc
 *.tif
+isce.log
+*.ipynb_checkpoints
+geolocate/__pycache__/geolocate.cpython-310.pyc
+functions/__pycache__/geocoding.cpython-310.pyc
+incidence_angle/jack_incidence_angle.ipynb
