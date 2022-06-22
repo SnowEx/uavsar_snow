@@ -69,12 +69,6 @@ def geolocate_uavsar(in_fp, ann_fp, out_dir, llh_fp):
     vrts = glob(join(tmp_dir, '*.vrt'))
     latf = [f for f in vrts if basename(f) == 'llh.lat.vrt'][0]
     longf = [f for f in vrts if basename(f) == 'llh.long.vrt'][0]
-    # for f in vrts:
-    #     geocodeUsingGdalWarp(infile = f,
-    #                     latfile = latf,
-    #                     lonfile = longf,
-    #                     outfile = join(out_dir, basename(f).replace('vrt','tif')),
-    #                     spacing=[.00005556,.00005556])
 
     profile = {
         'driver': 'GTiff',
@@ -132,5 +126,3 @@ def geolocate_uavsar(in_fp, ann_fp, out_dir, llh_fp):
     shutil.rmtree(tmp_dir)
 
     return res_f
-
-        
