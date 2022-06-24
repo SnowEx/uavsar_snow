@@ -118,11 +118,31 @@ def C3_to_T3(C3):
     return T3
 
 
-def T3_to_alpha1():
+def T3_to_alpha1(T3):
     """
-    
-    """
+    Calculates alpha1 decomposition product from the coherency matrix T3. Uses
+    the  eigenvector-eigenvalue identity method described by Nielsen 2022 
+    [DOI: 10.1109/LGRS.2022.3169994]. This is a per-pixel calculation.
 
+    Arguments
+    ---------
+    T3 : np.array [3x3]
+        T3 matrix (use output from C3_to_T3 function)
+    
+    Returns
+    -------
+    alpha_1 : float
+        Alpha 1 angle in degrees. 
+    """
+    # Calculate M1, the first minor 
+    m1 = T3[1:,1:]
+    t3_values = np.linalg.eigvalsh(T3)
+    t3, t2, t1 = t3_values
+    m1_values = np.linalg.eigvalsh(m1)
+    m2, m1 = m1_values
+    e11 = np.sqrt(((t1 - m1)*(t1 - m2))/((t1-t2)*(t1-t3)))
+    alpha_1 = np.rad2deg(np.arccos(e11))
+    return alpha_1
 
 def T3_to_mean_alpha():
     """
