@@ -31,7 +31,7 @@ def get_polsar_stack(in_dir, bounds = False):
     Returns
     -------
     stack : np.array
-        Array of size [n x m x 6] containing UAVSAR data.
+        Array of size [rows x columns x 6] containing UAVSAR data.
     """
     # Read ann file
     ann_fp = glob(join(in_dir, '*.ann'))[0]
@@ -250,11 +250,11 @@ def decomp_components(stack, mean_alpha=True):
     Arguments
     ---------
     stack : np.array
-        Array of size [n x m x 6] containing UAVSAR data. Can use the output of 
+        Array of size [rows x cols x 6] containing UAVSAR data. Can use the output of 
         the get_polsar_stack function. 
     mean_alpha : bool
         If True, calculates and returns mean alpha product in addition to H, A, 
-        and alpha.
+        and alpha (Default: True).
 
     Returns
     -------
