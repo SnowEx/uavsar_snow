@@ -5,6 +5,6 @@ Contributors: Zachary Keskinen (Boise State University), Naheem Adebisi (Boise S
 
 ## Directory Explanation:
 - Geolocate: Geolocate, crop, and resample Uavsar SLCs to ground projection.
-- Incidence Angle: Calculate path lengths for uavsar images and incidence angles from arbitrary DEM
+- Incidence Angle: Calculate path lengths for Uavsar images and incidence angles from arbitrary DEM
 - Polsar: Calculate alpha angle, entropy, anisotropy for Uavsar polsar images
 - SWE Inversion: Standardized function to invert SWE from phase changes
