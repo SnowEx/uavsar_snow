@@ -293,7 +293,7 @@ def uavsar_H_A_alpha(stack, mean_alpha=True):
     Arguments
     ---------
     stack : np.array
-        Array of size [n x m x 6] containing UAVSAR data. Can use the output of 
+        Array of size [rows x columns x 6] containing UAVSAR data. Can use the output of 
         the get_polsar_stack function. 
     mean_alpha : bool (Default: True)
         If True, calculates and returns mean alpha product in addition to H, A, 
