@@ -251,5 +251,9 @@ def decomp_components(stack, mean_alpha=True):
         return H, A, alpha1
     
 
-def uavsar_H_A_alpha(stack):
-    return np.apply_along_axis(decomp_components, axis=2, arr=stack)
+def uavsar_H_A_alpha(stack, mean_alpha=True):
+    """
+    
+    """
+    out = np.apply_along_axis(decomp_components, args=mean_alpha, axis=2, arr=stack)
+    return out
