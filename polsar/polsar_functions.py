@@ -247,6 +247,10 @@ def decomp_components(stack, mean_alpha=True):
     the stack and can be applied to an entire scene/array using 
     np.apply_along_axis. Can also calculate mean alpha using boolean keyword.
 
+    Note if any cell location in the stack has one or more NaN elements it will
+    that cell location will be skipped entirely. This enables functionality
+    over entire UAVSAR scenes without having to mask NaN or clip rasters. 
+
     Arguments
     ---------
     stack : np.array
@@ -285,6 +289,21 @@ def uavsar_H_A_alpha(stack, mean_alpha=True):
     """
     Apply-along-axis version of decomp_products function. This function can be 
     used to perform H-A-alpha decomposition on a full UAVSAR scene. 
+
+    Arguments
+    ---------
+    stack : np.array
+        Array of size [n x m x 6] containing UAVSAR data. Can use the output of 
+        the get_polsar_stack function. 
+    mean_alpha : bool
+        If True, calculates and returns mean alpha product in addition to H, A, 
+        and alpha.
+
+    Returns
+    -------
+    H, A, alpha1 (opt. meanalpha) : np.array
+        Decomposition products calculated for the input scene. Size of all
+        output arrays will match rows/cols of the input stack.
     """
     out = np.apply_along_axis(decomp_components, mean_alpha=mean_alpha, 
                               axis=2, arr=stack)
