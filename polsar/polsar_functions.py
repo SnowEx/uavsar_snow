@@ -133,16 +133,17 @@ def T3_to_alpha1(T3):
     Returns
     -------
     alpha_1 : float
-        Alpha 1 angle in degrees. 
+        alpha 1 angle in degrees. 
     """
-    # Calculate M1, the first minor 
-    m1 = T3[1:,1:]
-    t3_values = np.linalg.eigvalsh(T3)
-    t3, t2, t1 = t3_values
-    m1_values = np.linalg.eigvalsh(m1)
-    m2, m1 = m1_values
+    # Calculate M1, the first minor of T3 by deleting first row/col
+    M1 = T3[1:,1:]
+    # Calculate eigenvalues
+    t3, t2, t1 = np.linalg.eigvalsh(T3)
+    m2, m1 = np.linalg.eigvalsh(M1)
+    # eigenvector component from Nielsen 2022
     e11 = np.sqrt(((t1 - m1)*(t1 - m2))/((t1-t2)*(t1-t3)))
     alpha_1 = np.rad2deg(np.arccos(e11))
+    
     return alpha_1
 
 def T3_to_mean_alpha():
