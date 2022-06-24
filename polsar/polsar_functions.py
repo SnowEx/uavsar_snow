@@ -1,7 +1,10 @@
 """
+Overview slideshow of Polsar:
 https://dges.carleton.ca/courses/IntroSAR/Winter2019/SECTION%203%20-%20Carleton%20SAR%20Training%20-%20SAR%20Polarimetry%20%20-%20Final.pdf
 
-Alpha Angles from Eigenvectors: DOI 10.1109/LGRS.2022.3169994
+Relevant
+Nielsen 2022: DOI 10.1109/LGRS.2022.3169994
+Cloude and Pottier 1997 [DOI: 10.1109/36.551935]
 """
 
 import math
@@ -54,7 +57,7 @@ def get_polsar_stack(in_dir):
 def calc_C3(HHHH, HHHV, HVHV, HVVV, HHVV, VVVV):
     """
     Calculates covariance matrix C3 from individual UAVSAR pixel locations. 
-    Formula derived from Nielsen 2022 [DOI: 10.1109/LGRS.2022.3169994]
+    Formula derived from Cloude and Pottier 1997 [DOI: 10.1109/36.551935]
 
     Arguments
     ---------
@@ -164,6 +167,20 @@ def uavsar_meanalpha():
     """
 
 def T3_to_H(T3):
+    """
+    Calculates entropy for a 3x3 T3 matrix.
+    Formula from Cloude and Pottier 1997 [DOI: 10.1109/36.551935]
+
+    Arguments
+    ---------
+    T3 : np.array [3x3]
+        T3 matrix (use output from C3_to_T3 function)
+    
+    Returns
+    -------
+    H : float
+        Entropy for that array.
+    """
     values = np.linalg.eigvalsh(T3)
     weighted = values/np.sum(values)
     h = 0
@@ -189,7 +206,7 @@ def T3_to_A(T3):
     A = (values[1] - values[0]) / (values[1] + values[0])
     return A
 
-def uavsar_A():
+def uavsar_A(stack):
     """
     Calculates anisotropy for all pixels of an 6 x rows x col array.
     """
