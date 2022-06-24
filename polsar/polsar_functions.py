@@ -1,9 +1,10 @@
 """
 https://dges.carleton.ca/courses/IntroSAR/Winter2019/SECTION%203%20-%20Carleton%20SAR%20Training%20-%20SAR%20Polarimetry%20%20-%20Final.pdf
 
-Danish paper DOI: 10.1109/LGRS.2022.3169994
+Alpha Angles from Eigenvectors: DOI 10.1109/LGRS.2022.3169994
 """
 
+import math
 import numpy as np
 from glob import glob
 from os.path import join, basename
@@ -141,14 +142,34 @@ def uavsar_meanalpha():
     
     """
 
+def calc_H(T3):
+    values = np.linalg.eigvalsh(T3)
+    weighted = values/np.sum(values)
+    h = 0
+    for i in range(3):
+        h +=  weighted[i] * math.log(weighted[i], 3)
+    h *= -1
+    return h
 
-def uavsar_H():
+def uavsar_H(stack):
     """"
     entropy
     """
+    C3 = calc_C3(*stack)
+    T3 = C3_to_T3(C3)
+    H = calc_H(T3)
+    return H
 
+def calc_A(T3):
+    values = np.linalg.eigvalsh(T3)
+    A = (values[1] - values[0]) / (values[1] + values[0])
+    return A
 
 def uavsar_A():
     """
     anisotropy
     """
+    C3 = calc_C3(*stack)
+    T3 = C3_to_T3(C3)
+    A = calc_A(T3)
+    return A
