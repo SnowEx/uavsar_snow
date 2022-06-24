@@ -24,7 +24,7 @@ def get_polsar_stack(in_dir):
     Returns
     -------
     stack : np.array
-        Array of size [n x m x 6] containing UAVSAR data
+        Array of size [n x m x 6] containing UAVSAR data.
     """
     # Read ann file
     ann_fp = glob(join(in_dir, '*.ann'))[0]
@@ -50,11 +50,37 @@ def get_polsar_stack(in_dir):
         return stack
 
 
-def calc_C3():
+def calc_C3(HHHH, HHHV, HVHV, HVVV, HHVV, VVVV):
     """
+    Calculates covariance matrix C3 from individual UAVSAR pixel locations. 
+    Formula derived from Nielsen 2022 [DOI: 10.1109/LGRS.2022.3169994]
 
+    Arguments
+    ---------
+    HHHH, HHHV, HVHV, HVVV, HHVV, VVVV : float
+        The six components of UAVSAR GRD data.
+
+    Returns
+    -------
+    C3 : np.array [3x3]
+        C3 matrix with complex dtype.
     """
-
+    # Lower triangular components
+    c11 = HHHH
+    c12 = np.sqrt(2)*HHHV
+    c13 = HHVV
+    c22 = 2*HVHV
+    c23 = np.sqrt(2)*HVVV
+    c33 = VVVV
+    # Upper components are conjugates of lower components
+    c21 = np.conjugate(c12)
+    c31 = np.conjugate(c13)
+    c32 = np.conjugate(c23)
+    # Assemble C3 matrix
+    C3 = np.array([[c11,c12,c13],
+                   [c21,c22,c23],
+                   [c31,c32,c33]])
+    return C3
 
 def C3_to_T3():
     """
