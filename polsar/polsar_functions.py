@@ -142,7 +142,7 @@ def uavsar_meanalpha():
     
     """
 
-def calc_H(T3):
+def T3_to_H(T3):
     values = np.linalg.eigvalsh(T3)
     weighted = values/np.sum(values)
     h = 0
@@ -153,23 +153,38 @@ def calc_H(T3):
 
 def uavsar_H(stack):
     """"
-    entropy
+    Calculate entropy for all pixels of an 6 x rows x col array.
     """
     C3 = calc_C3(*stack)
     T3 = C3_to_T3(C3)
-    H = calc_H(T3)
+    H = T3_to_H(T3)
     return H
 
-def calc_A(T3):
+def T3_to_A(T3):
+    """
+    Calculate anisotropy for one pixel
+    """
     values = np.linalg.eigvalsh(T3)
     A = (values[1] - values[0]) / (values[1] + values[0])
     return A
 
 def uavsar_A():
     """
-    anisotropy
+    Calculates anisotropy for all pixels of an 6 x rows x col array.
     """
     C3 = calc_C3(*stack)
     T3 = C3_to_T3(C3)
-    A = calc_A(T3)
+    A = T3_to_A(T3)
     return A
+
+def uavsar_H_A_alpha(stack):
+    """
+    Calculate alpha, anisotropy, and entropy for all pixels of an 6 x rows x col array.
+    returns 3 x rows x cols array with mean alpha @ 0, entropy @ 1 and anisotropy @ 2.
+    """
+    C3 = calc_C3(*stack)
+    T3 = C3_to_T3(C3)
+    mean_alpha = T3_to_mean_alpha(T3)
+    H = T3_to_H(T3)
+    A = T3_to_A(T3)
+    return mean_alpha, H, A
