@@ -307,7 +307,6 @@ def uavsar_H_A_alpha(stack, mean_alpha=True):
     """
     out = np.apply_along_axis(decomp_components, mean_alpha=mean_alpha, 
                               axis=2, arr=stack)
-
     H = out[:,:,0]
     A = out[:,:,1]
     alpha1 = out[:,:,2]
