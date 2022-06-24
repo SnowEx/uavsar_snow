@@ -14,7 +14,7 @@ from os.path import join, basename
 from uavsar_pytools.convert.tiff_conversion import read_annotation
 
 
-def get_polsar_stack(in_dir):
+def get_polsar_stack(in_dir, bounds = False):
     """
     Reads UAVSAR GRD files from input directory.
 
@@ -24,6 +24,9 @@ def get_polsar_stack(in_dir):
         Input directory that contains UAVSAR GRD data. Must have all 
         crosspruducts (HHHH, HVHV, VVVV, HHHV, HVHV, and HVVV) and the 
         associated .ann file.
+
+    
+    bounds (optional) : Subset to x_min, x_max, y_min, y_max in pixels.
     
     Returns
     -------
@@ -48,10 +51,13 @@ def get_polsar_stack(in_dir):
             arr = np.fromfile(f, dtype = np.float32).reshape(nrows, ncols)
         
         arr[arr == 0] = np.nan
+        if bounds:
+            xmin, xmax, ymin, ymax = bounds
+            arr[xmin:xmax,ymin:ymax]
         pol[name] = arr
-        stack = np.dstack([pol['HHHH'], pol['HHHV'], pol['HVHV'], pol['HVVV'], pol['HHVV'], pol['VVVV']])
-        
-        return stack
+    stack = np.dstack([pol['HHHH'], pol['HHHV'], pol['HVHV'], pol['HVVV'], pol['HHVV'], pol['VVVV']])
+    
+    return stack
 
 
 def calc_C3(HHHH, HHHV, HVHV, HVVV, HHVV, VVVV):
