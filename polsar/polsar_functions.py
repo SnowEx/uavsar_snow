@@ -24,7 +24,7 @@ def get_polsar_stack(in_dir):
     Returns
     -------
     stack : np.array
-        Array of size [n x m x 6] containing UAVSAR data
+        Array of size [n x m x 6] containing UAVSAR data.
     """
     # Read ann file
     ann_fp = glob(join(in_dir, '*.ann'))[0]
@@ -50,17 +50,73 @@ def get_polsar_stack(in_dir):
         return stack
 
 
-def calc_C3():
+def calc_C3(HHHH, HHHV, HVHV, HVVV, HHVV, VVVV):
     """
+    Calculates covariance matrix C3 from individual UAVSAR pixel locations. 
+    Formula derived from Nielsen 2022 [DOI: 10.1109/LGRS.2022.3169994]
 
+    Arguments
+    ---------
+    HHHH, HHHV, HVHV, HVVV, HHVV, VVVV : float
+        The six components of UAVSAR GRD data.
+
+    Returns
+    -------
+    C3 : np.array [3x3]
+        C3 matrix with complex dtype.
     """
+    # Lower triangular components
+    c11 = HHHH
+    c12 = np.sqrt(2)*HHHV
+    c13 = HHVV
+    c22 = 2*HVHV
+    c23 = np.sqrt(2)*HVVV
+    c33 = VVVV
+    # Upper components are conjugates of lower components
+    c21 = np.conjugate(c12)
+    c31 = np.conjugate(c13)
+    c32 = np.conjugate(c23)
+    # Assemble C3 matrix
+    C3 = np.array([[c11,c12,c13],
+                   [c21,c22,c23],
+                   [c31,c32,c33]])
+    return C3
 
 
-def C3_to_T3():
+def C3_to_T3(C3):
     """
+    Converts covariance matrix C3 to coherency matrix T3. Translation of the
+    PolSARPro C3_to_T3 function which can be found here (in C):
     https://github.com/EO-College/polsarpro/blob/master/Soft/src/lib/util_convert.c
-    use more readable version
+    
+    Arguments
+    ---------
+    C3 : np.array [3x3]
+        C3 matrix (use output from calc_C3 function)
+    
+    Returns
+    -------
+    T3 : np.array [3x3]
+        T3 matrix with complex dtype.
     """
+    # Lower traigular components
+    t11 = 0.5*(C3[0,0]+2*C3[0,2].real + C3[2,2])
+    t21 = 0.5*(C3[0,0]-C3[2,2]) + (-C3[0,2].imag)*1j
+    t31 = ((C3[0,1].real + C3[1,2].real) + (C3[0,1].imag - C3[1,2].imag)*1j)/np.sqrt(2)
+    t22 = 0.5*(C3[0,0] - 2 * C3[0,2].real + C3[2,2])
+    t32 = ((C3[0,1].real - C3[1,2].real) + (C3[0,1].imag + C3[1,2].imag)*1j)/np.sqrt(2)
+    t33 = C3[1,1]
+    # Upper components are conjugates of lower components
+    t12 = np.conjugate(t21)
+    t13 = np.conjugate(t31)
+    t23 = np.conjugate(t32)
+    # Assemble T3 matrix
+    T3 = np.array([[t11,t12,t13],
+                   [t21,t22,t23],
+                   [t31,t32,t33]])
+    
+    return T3
+
 
 def T3_to_alpha1():
     """
