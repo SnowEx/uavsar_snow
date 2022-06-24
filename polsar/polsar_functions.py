@@ -54,7 +54,7 @@ def get_polsar_stack(in_dir, bounds = False):
         if bounds:
             xmin, xmax, ymin, ymax = bounds
             arr = arr[xmin:xmax,ymin:ymax]
-        arr = np.ma.masked_invalid(arr)
+        # arr = np.ma.masked_invalid(arr)
         pol[name] = arr
     
     stack = np.dstack([pol['HHHH'], pol['HHHV'], pol['HVHV'], pol['HVVV'], pol['HHVV'], pol['VVVV']])
