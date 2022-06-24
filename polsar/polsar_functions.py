@@ -46,9 +46,10 @@ def get_polsar_stack(in_dir):
         
         arr[arr == 0] = np.nan
         pol[name] = arr
-        stack = np.dstack([pol['HHHH'], pol['HHHV'], pol['HVHV'], pol['HVVV'], pol['HHVV'], pol['VVVV']])
-        
-        return stack
+    
+    stack = np.dstack([pol['HHHH'], pol['HHHV'], pol['HVHV'], pol['HVVV'], pol['HHVV'], pol['VVVV']])
+    
+    return stack
 
 
 def calc_C3(HHHH, HHHV, HVHV, HVVV, HHVV, VVVV):
@@ -180,30 +181,7 @@ def T3_to_mean_alpha(T3):
     mean_alpha = np.rad2deg(mean_alpha)
     
     return mean_alpha
-
-
-def uavsar_alpha1(stack):
-    """
-    Calculates alpha 1 decomposition product on the entire UAVSAR scene.
-
-    Arguments
-    ---------
-    stack: np.array
-        Stack of UAVSAR GRD products of size [n x m x 6]. Pass the output of 
-        get_polsar_stack function. 
     
-    Returns
-    -------
-    """
-    C3 = calc_C3(*stack)
-    T3 = C3_to_T3(C3)
-    alpha_1 = T3_to_alpha1(T3)
-    return alpha_1
-
-def uavsar_meanalpha():
-    """
-    
-    """
 
 def T3_to_H(T3):
     values = np.linalg.eigvalsh(T3)
@@ -214,14 +192,6 @@ def T3_to_H(T3):
     h *= -1
     return h
 
-def uavsar_H(stack):
-    """"
-    Calculate entropy for all pixels of an 6 x rows x col array.
-    """
-    C3 = calc_C3(*stack)
-    T3 = C3_to_T3(C3)
-    H = T3_to_H(T3)
-    return H
 
 def T3_to_A(T3):
     """
@@ -231,23 +201,31 @@ def T3_to_A(T3):
     A = (values[1] - values[0]) / (values[1] + values[0])
     return A
 
-def uavsar_A():
-    """
-    Calculates anisotropy for all pixels of an 6 x rows x col array.
-    """
-    C3 = calc_C3(*stack)
-    T3 = C3_to_T3(C3)
-    A = T3_to_A(T3)
-    return A
 
-def uavsar_H_A_alpha(stack):
+def decomp_components(stack, mean_alpha=True):
     """
+    Function to calculate H-A-alpha (entropy-anisotropy-alpha) decomposition 
+    from a stack of UAVSAR data. This function operates over the depth axis of 
+    the stack and can be applied to an entire scene/array using 
+    np.apply_along_axis. Can also calculate 
+
     Calculate alpha, anisotropy, and entropy for all pixels of an 6 x rows x col array.
     returns 3 x rows x cols array with mean alpha @ 0, entropy @ 1 and anisotropy @ 2.
     """
+    # Matrices
     C3 = calc_C3(*stack)
     T3 = C3_to_T3(C3)
-    mean_alpha = T3_to_mean_alpha(T3)
+    # Decomposition products
     H = T3_to_H(T3)
     A = T3_to_A(T3)
-    return mean_alpha, H, A
+    alpha1 = T3_to_alpha1(T3)
+    
+    if mean_alpha:
+        meanalpha = T3_to_mean_alpha(T3)
+        return H, A, alpha1, meanalpha
+    else:
+        return H, A, alpha1
+    
+
+def uavsar_H_A_alpha(stack):
+    return np.apply_along_axis(decomp_components, axis=2, arr=stack)
