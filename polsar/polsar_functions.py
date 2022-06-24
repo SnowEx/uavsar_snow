@@ -245,13 +245,21 @@ def decomp_components(stack, mean_alpha=True):
     Function to calculate H-A-alpha (entropy-anisotropy-alpha) decomposition 
     from a stack of UAVSAR data. This function operates over the depth axis of 
     the stack and can be applied to an entire scene/array using 
-    np.apply_along_axis. Can also calculate mean alpha using boolean keyword
+    np.apply_along_axis. Can also calculate mean alpha using boolean keyword.
 
     Arguments
     ---------
+    stack : np.array
+        Array of size [n x m x 6] containing UAVSAR data. Can use the output of 
+        the get_polsar_stack function. 
+    mean_alpha : bool
+        If True, calculates and returns mean alpha product in addition to H, A, 
+        and alpha.
 
-
-    Ret
+    Returns
+    -------
+    H, A, alpha1 (opt. meanalpha) : float
+        Decomposition products calculated at a given pixel location.
     """
     # Matrices
     C3 = calc_C3(*stack)
@@ -270,9 +278,11 @@ def decomp_components(stack, mean_alpha=True):
 
 def uavsar_H_A_alpha(stack, mean_alpha=True):
     """
-    
+    Apply-along-axis version of decomp_products function. This function can be 
+    used to perform H-A-alpha decomposition on a full UAVSAR scene. 
     """
-    out = np.apply_along_axis(decomp_components, mean_alpha=mean_alpha, axis=2, arr=stack)
+    out = np.apply_along_axis(decomp_components, mean_alpha=mean_alpha, 
+                              axis=2, arr=stack)
     H = out[:,:,0]
     A = out[:,:,1]
     alpha1 = out[:,:,2]
