@@ -256,9 +256,9 @@ def decomp_components(stack, mean_alpha=True):
     stack : np.array
         Array of size [rows x cols x 6] containing UAVSAR data. Can use the output of 
         the get_polsar_stack function. 
-    mean_alpha : bool
+    mean_alpha : bool (Default: True)
         If True, calculates and returns mean alpha product in addition to H, A, 
-        and alpha (Default: True).
+        and alpha.
 
     Returns
     -------
@@ -295,7 +295,7 @@ def uavsar_H_A_alpha(stack, mean_alpha=True):
     stack : np.array
         Array of size [n x m x 6] containing UAVSAR data. Can use the output of 
         the get_polsar_stack function. 
-    mean_alpha : bool
+    mean_alpha : bool (Default: True)
         If True, calculates and returns mean alpha product in addition to H, A, 
         and alpha.
 
