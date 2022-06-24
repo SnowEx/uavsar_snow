@@ -182,11 +182,23 @@ def T3_to_mean_alpha(T3):
     return mean_alpha
 
 
-def uavsar_alpha1():
+def uavsar_alpha1(stack):
     """
-    
-    """
+    Calculates alpha 1 decomposition product on the entire UAVSAR scene.
 
+    Arguments
+    ---------
+    stack: np.array
+        Stack of UAVSAR GRD products of size [n x m x 6]. Pass the output of 
+        get_polsar_stack function. 
+    
+    Returns
+    -------
+    """
+    C3 = calc_C3(*stack)
+    T3 = C3_to_T3(C3)
+    alpha_1 = T3_to_alpha1(T3)
+    return alpha_1
 
 def uavsar_meanalpha():
     """
