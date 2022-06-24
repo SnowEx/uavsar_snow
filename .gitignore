@@ -12,4 +12,4 @@ geolocate/__init__.py
 *.grd
 *.slc
 *.zip
-
+polsar_imgs/uticam_21003_21004_002_210120_L090_CX_01_grd
