@@ -194,8 +194,9 @@ def T3_to_mean_alpha(T3):
 
 def T3_to_H(T3):
     """
-    Calculates entropy for a 3x3 T3 matrix.
-    Formula from Cloude and Pottier 1997 [DOI: 10.1109/36.551935]
+    Calculates entropy (H) decomposition product from the coherency matrix T3.
+    Formula from Cloude and Pottier 1997 [DOI: 10.1109/36.551935]. This is a 
+    per-pixel calculation.
 
     Arguments
     ---------
@@ -205,10 +206,11 @@ def T3_to_H(T3):
     Returns
     -------
     H : float
-        Entropy for that array.
+        Entropy (0 <= H <= 1).
     """
     values = np.linalg.eigvalsh(T3)
     weighted = values/np.sum(values)
+    # Sum weighted values for H calculation
     h = 0
     for i in range(3):
         h +=  weighted[i] * math.log(weighted[i], 3)
@@ -218,7 +220,19 @@ def T3_to_H(T3):
 
 def T3_to_A(T3):
     """
-    Calculate anisotropy for one pixel
+    Calculates anisotropy (A) decomposition product from the coherency matrix 
+    T3. Formula from Cloude and Pottier 1997 [DOI: 10.1109/36.551935]. This is 
+    a per-pixel calculation.
+
+    Arguments
+    ---------
+    T3 : np.array [3x3]
+        T3 matrix (use output from C3_to_T3 function)
+    
+    Returns
+    -------
+    A : float
+        Anisotropy (0 <= H <= 1).
     """
     values = np.linalg.eigvalsh(T3)
     A = (values[1] - values[0]) / (values[1] + values[0])
@@ -255,4 +269,11 @@ def uavsar_H_A_alpha(stack, mean_alpha=True):
     
     """
     out = np.apply_along_axis(decomp_components, args=mean_alpha, axis=2, arr=stack)
-    return out
+    H = out[:,:,0]
+    A = out[:,:,1]
+    alpha1 = out[:,:,2]
+    if out.shape[-1] > 3:
+        mean_alpha = out[:,:,3]
+        return H, A, alpha1, mean_alpha
+    else:
+        return H, A, alpha1
