@@ -261,6 +261,11 @@ def decomp_components(stack, mean_alpha=True):
     H, A, alpha1 (opt. meanalpha) : float
         Decomposition products calculated at a given pixel location.
     """
+    if np.any(np.isnan(stack)):
+        if mean_alpha:
+            return np.repeat(np.nan, 4)
+        else:
+            return np.repeat(np.nan, 3)
     # Matrices
     C3 = calc_C3(*stack)
     T3 = C3_to_T3(C3)
@@ -283,6 +288,7 @@ def uavsar_H_A_alpha(stack, mean_alpha=True):
     """
     out = np.apply_along_axis(decomp_components, mean_alpha=mean_alpha, 
                               axis=2, arr=stack)
+
     H = out[:,:,0]
     A = out[:,:,1]
     alpha1 = out[:,:,2]
