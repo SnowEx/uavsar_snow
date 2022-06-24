@@ -1,7 +1,7 @@
 # Uavsar_Snow
 Code for using UAVSAR imagery in Snow Water Estimations.
 
-Contributors: Zachary Keskinen (Boise State University), Naheem Adebisi (Boise State University), Ross Palomaki (Montana State University), Jack Tarricone (University of Nevada). Questions? Zachkeskinen@gmail.com
+Contributors: Zachary Keskinen (Boise State University), Naheem Adebisi (Boise State University), Ross Palomaki (Montana State University), Jack Tarricone (University of Nevada). Questions? zacharykeskinen@u.boisestate.edu
 
 ## Directory Explanation:
 - Geolocate: Geolocate, crop, and resample Uavsar SLCs to ground projection.
