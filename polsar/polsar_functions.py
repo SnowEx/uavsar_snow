@@ -1,9 +1,13 @@
 """
+Overview slideshow of Polsar:
 https://dges.carleton.ca/courses/IntroSAR/Winter2019/SECTION%203%20-%20Carleton%20SAR%20Training%20-%20SAR%20Polarimetry%20%20-%20Final.pdf
 
-Danish paper DOI: 10.1109/LGRS.2022.3169994
+Relevant
+Nielsen 2022: DOI 10.1109/LGRS.2022.3169994
+Cloude and Pottier 1997 [DOI: 10.1109/36.551935]
 """
 
+import math
 import numpy as np
 from glob import glob
 from os.path import join, basename
@@ -53,7 +57,7 @@ def get_polsar_stack(in_dir):
 def calc_C3(HHHH, HHHV, HVHV, HVVV, HHVV, VVVV):
     """
     Calculates covariance matrix C3 from individual UAVSAR pixel locations. 
-    Formula derived from Nielsen 2022 [DOI: 10.1109/LGRS.2022.3169994]
+    Formula derived from Cloude and Pottier 1997 [DOI: 10.1109/36.551935]
 
     Arguments
     ---------
@@ -118,37 +122,149 @@ def C3_to_T3(C3):
     return T3
 
 
-def T3_to_alpha1():
+def T3_to_alpha1(T3):
     """
+    Calculates alpha1 decomposition product from the coherency matrix T3. Uses
+    the eigenvector-eigenvalue identity method described by Nielsen 2022 
+    [DOI: 10.1109/LGRS.2022.3169994]. This is a per-pixel calculation.
+
+    Arguments
+    ---------
+    T3 : np.array [3x3]
+        T3 matrix (use output from C3_to_T3 function)
     
+    Returns
+    -------
+    alpha_1 : float
+        alpha 1 angle in degrees. 
     """
-
-
-def T3_to_mean_alpha():
-    """
+    # Calculate M1, the first minor of T3 by deleting first row/col
+    M1 = T3[1:,1:]
+    # Calculate eigenvalues
+    t3, t2, t1 = np.linalg.eigvalsh(T3)
+    m2, m1 = np.linalg.eigvalsh(M1)
+    # Eigenvector component from Nielsen 2022
+    e11 = np.sqrt(((t1 - m1)*(t1 - m2))/((t1-t2)*(t1-t3)))
+    alpha_1 = np.rad2deg(np.arccos(e11))
     
-    """
+    return alpha_1
 
-
-def uavsar_alpha1():
+def T3_to_mean_alpha(T3):
     """
+    Calculates mean alpha angle decomposition product from the coherency matrix 
+    T3. Uses the eigenvector-eigenvalue identity method described by Nielsen 2022 
+    [DOI: 10.1109/LGRS.2022.3169994]. This is a per-pixel calculation.
+
+    Arguments
+    ---------
+    T3 : np.array [3x3]
+        T3 matrix (use output from C3_to_T3 function)
     
+    Returns
+    -------
+    mean_alpha : float
+        mean alpha angle in degrees. 
     """
+    M1 = T3[1:,1:]
+    # Calculate eigenvalues
+    t3, t2, t1 = np.linalg.eigvalsh(T3)
+    m2, m1 = np.linalg.eigvalsh(M1)
+    # Eigenvector components from Nielsen 2022
+    e11 = np.sqrt(((t1 - m1)*(t1 - m2))/((t1-t2)*(t1-t3)))
+    alpha_1 = np.arccos(e11)
+    e21 = np.sqrt(((t2 - m1)*(t2-m2))/((t2-t1)*(t2-t3)))
+    alpha_2 = np.arccos(e21)
+    e31 = np.sqrt(((t3 - m1)*(t3-m2))/((t3-t1)*(t3-t2)))
+    alpha_3 = np.arccos(e31)
+    # Calculate weighted eigenvalues
+    t3_values = [t3, t2, t1]
+    weighted = t3_values/np.sum(t3_values)
+    mean_alpha = weighted[2]*alpha_1 + weighted[1]*alpha_2 + weighted[0]*alpha_3
+    mean_alpha = np.rad2deg(mean_alpha)
+    
+    return mean_alpha
 
+
+def uavsar_alpha1(stack):
+    """
+    Calculates alpha 1 decomposition product on the entire UAVSAR scene.
+
+    Arguments
+    ---------
+    stack: np.array
+        Stack of UAVSAR GRD products of size [n x m x 6]. Pass the output of 
+        get_polsar_stack function. 
+    
+    Returns
+    -------
+    """
+    C3 = calc_C3(*stack)
+    T3 = C3_to_T3(C3)
+    alpha_1 = T3_to_alpha1(T3)
+    return alpha_1
 
 def uavsar_meanalpha():
     """
     
     """
 
+def T3_to_H(T3):
+    """
+    Calculates entropy for a 3x3 T3 matrix.
+    Formula from Cloude and Pottier 1997 [DOI: 10.1109/36.551935]
 
-def uavsar_H():
+    Arguments
+    ---------
+    T3 : np.array [3x3]
+        T3 matrix (use output from C3_to_T3 function)
+    
+    Returns
+    -------
+    H : float
+        Entropy for that array.
+    """
+    values = np.linalg.eigvalsh(T3)
+    weighted = values/np.sum(values)
+    h = 0
+    for i in range(3):
+        h +=  weighted[i] * math.log(weighted[i], 3)
+    h *= -1
+    return h
+
+def uavsar_H(stack):
     """"
-    entropy
+    Calculate entropy for all pixels of an 6 x rows x col array.
     """
+    C3 = calc_C3(*stack)
+    T3 = C3_to_T3(C3)
+    H = T3_to_H(T3)
+    return H
 
+def T3_to_A(T3):
+    """
+    Calculate anisotropy for one pixel
+    """
+    values = np.linalg.eigvalsh(T3)
+    A = (values[1] - values[0]) / (values[1] + values[0])
+    return A
 
-def uavsar_A():
+def uavsar_A(stack):
     """
-    anisotropy
+    Calculates anisotropy for all pixels of an 6 x rows x col array.
     """
+    C3 = calc_C3(*stack)
+    T3 = C3_to_T3(C3)
+    A = T3_to_A(T3)
+    return A
+
+def uavsar_H_A_alpha(stack):
+    """
+    Calculate alpha, anisotropy, and entropy for all pixels of an 6 x rows x col array.
+    returns 3 x rows x cols array with mean alpha @ 0, entropy @ 1 and anisotropy @ 2.
+    """
+    C3 = calc_C3(*stack)
+    T3 = C3_to_T3(C3)
+    mean_alpha = T3_to_mean_alpha(T3)
+    H = T3_to_H(T3)
+    A = T3_to_A(T3)
+    return mean_alpha, H, A
