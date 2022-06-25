@@ -11,7 +11,8 @@ import math
 import numpy as np
 from glob import glob
 from os.path import join, basename
-from uavsar_pytools.convert.tiff_conversion import read_annotation
+
+from uavsar_pytools.convert.tiff_conversion import read_annotation # array_to_tiff
 
 
 def get_polsar_stack(in_dir, bounds = False):
@@ -33,6 +34,7 @@ def get_polsar_stack(in_dir, bounds = False):
     stack : np.array
         Array of size [rows x columns x 6] containing UAVSAR data.
     """
+    req_pols = set(['VVVV', 'HVHV', 'HVVV', 'HHHV', 'HHVV', 'HHHH'])
     # Read ann file
     ann_fp = glob(join(in_dir, '*.ann'))[0]
     desc = read_annotation(ann_fp)
@@ -54,9 +56,9 @@ def get_polsar_stack(in_dir, bounds = False):
         if bounds:
             xmin, xmax, ymin, ymax = bounds
             arr = arr[xmin:xmax,ymin:ymax]
-        # arr = np.ma.masked_invalid(arr)
         pol[name] = arr
-    
+    missing_pols = req_pols - req_pols.intersection(pol.keys())
+    assert len(missing_pols) == 0, f'Missing required polarizations : {missing_pols}'
     stack = np.dstack([pol['HHHH'], pol['HHHV'], pol['HVHV'], pol['HVVV'], pol['HHVV'], pol['VVVV']])
     
     return stack
@@ -315,3 +317,50 @@ def uavsar_H_A_alpha(stack, mean_alpha=True):
         return H, A, alpha1, mean_alpha
     else:
         return H, A, alpha1
+
+def H_A_alpha_decomp(in_dir, out_dir):
+    """
+    in_dir must have all polarizations of 
+    """
+    stack = get_polsar_stack(in_dir)
+    desc = read_annotation(glob(join(in_dir, '*.ann'))[0])
+    H, A, alpha1, mean_alpha = uavsar_H_A_alpha(stack)
+    d = {}
+    d['entropy'] = H
+    d['anisotropy'] = A
+    d['alpha1'] = alpha1
+    d['mean_alpha'] = mean_alpha
+    for name, arr in d.items():
+        out_fp = join(out_dir, name+'.tif')
+        array_to_tiff(arr, out_fp, desc = desc, type = 'grd_pwr')
+
+def array_to_tiff(arr, out_fp, desc, type):
+    # Pull the appropriate values from our annotation dictionary
+    nrow = desc[f'{type}.set_rows']['value']
+    ncol = desc[f'{type}.set_cols']['value']
+    # Pixel spacing
+    dlat = desc[f'{type}.row_mult']['value']
+    dlon = desc[f'{type}.col_mult']['value']
+    # Upper left corner coordinates
+    lat1 = desc[f'{type}.row_addr']['value']
+    lon1 = desc[f'{type}.col_addr']['value']
+    # Lat1/lon1 are already the center so for geotiff were good to go.
+    t = Affine.translation(float(lon1), float(lat1))* Affine.scale(float(dlon), float(dlat))
+    # Build the transform and CRS
+    crs = CRS.from_user_input("EPSG:4326")
+
+    dataset = rasterio.open(
+        out_fp,
+        'w+',
+        driver='GTiff',
+        height=arr.shape[0],
+        width=arr.shape[1],
+        count=1,
+        dtype=arr.dtype,
+        crs=crs,
+        transform=t,
+    )
+    # Write out the data
+    dataset.write(arr, 1)
+
+    dataset.close()
