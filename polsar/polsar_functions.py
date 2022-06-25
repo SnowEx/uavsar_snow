@@ -316,7 +316,7 @@ def uavsar_H_A_alpha(stack, parralel = False, mean_alpha=True):
         import dask.array as da
         # res = np.apply_along_axis(decomp_components, mean_alpha=mean_alpha, 
         #                       axis=2, arr=stack)
-        res = da.apply_along_axis(decomp_components, axis = 2, arr = stack, dtype = stack.dtype).compute()
+        res = da.apply_along_axis(decomp_components, axis = 2, arr = stack,mean_alpha=mean_alpha, dtype = stack.dtype).compute()
     else:
         res_shape = list(stack.shape[:2])
         res_shape.append(4)
