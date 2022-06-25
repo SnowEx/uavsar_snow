@@ -17,6 +17,8 @@ import rasterio
 from rasterio.crs import CRS
 from rasterio.transform import Affine
 
+import dask.array as da
+
 from uavsar_pytools.convert.tiff_conversion import read_annotation # array_to_tiff
 
 
@@ -39,6 +41,7 @@ def get_polsar_stack(in_dir, bounds = False):
     stack : np.array
         Array of size [rows x columns x 6] containing UAVSAR data.
     """
+
     req_pols = set(['VVVV', 'HVHV', 'HVVV', 'HHHV', 'HHVV', 'HHHH'])
     # Read ann file
     ann_fp = glob(join(in_dir, '*.ann'))[0]
@@ -61,10 +64,11 @@ def get_polsar_stack(in_dir, bounds = False):
         if bounds:
             xmin, xmax, ymin, ymax = bounds
             arr = arr[xmin:xmax,ymin:ymax]
-        pol[name] = arr
+        pol[name] = da.from_array(arr)
     missing_pols = req_pols - req_pols.intersection(pol.keys())
     assert len(missing_pols) == 0, f'Missing required polarizations : {missing_pols}'
-    stack = np.dstack([pol['HHHH'], pol['HHHV'], pol['HVHV'], pol['HVVV'], pol['HHVV'], pol['VVVV']])
+    stack = da.stack([pol['HHHH'], pol['HHHV'], pol['HVHV'], pol['HVVV'], pol['HHVV'], pol['VVVV']], axis = 2)
+    # stack = np.dstack([pol['HHHH'], pol['HHHV'], pol['HVHV'], pol['HVVV'], pol['HHVV'], pol['VVVV']])
     
     return stack
 
@@ -313,7 +317,6 @@ def uavsar_H_A_alpha(stack, parralel = False, mean_alpha=True):
         output arrays will match rows/cols of the input stack.
     """
     if parralel:
-        import dask.array as da
         # res = np.apply_along_axis(decomp_components, mean_alpha=mean_alpha, 
         #                       axis=2, arr=stack)
         res = da.apply_along_axis(decomp_components, axis = 2, arr = stack,mean_alpha=mean_alpha, dtype = stack.dtype).compute()
@@ -324,6 +327,7 @@ def uavsar_H_A_alpha(stack, parralel = False, mean_alpha=True):
         iters = stack.shape[0]*stack.shape[1]
         for i, j in tqdm(np.ndindex(stack.shape[:2]), total = iters):
             res[i,j,:] = decomp_components(stack[i,j])
+    print(res)
     H = res[:,:,0]
     A = res[:,:,1]
     alpha1 = res[:,:,2]
@@ -333,13 +337,16 @@ def uavsar_H_A_alpha(stack, parralel = False, mean_alpha=True):
     else:
         return H, A, alpha1
 
-def H_A_alpha_decomp(in_dir, out_dir):
+def H_A_alpha_decomp(in_dir, out_dir, parralel = False):
     """
     in_dir must have all polarizations of 
     """
+    print('Getting polsar stack.')
     stack = get_polsar_stack(in_dir)
+    print('Getting annotation')
     desc = read_annotation(glob(join(in_dir, '*.ann'))[0])
-    H, A, alpha1, mean_alpha = uavsar_H_A_alpha(stack)
+    print('Starting processing')
+    H, A, alpha1, mean_alpha = uavsar_H_A_alpha(stack, parralel = True)
     d = {}
     d['entropy'] = H
     d['anisotropy'] = A
