@@ -272,7 +272,7 @@ def decomp_components(stack, mean_alpha=True):
     H, A, alpha1 (opt. meanalpha) : float
         Decomposition products calculated at a given pixel location.
     """
-    if np.any(np.isnan(stack)):
+    if np.any(np.isnan(stack)) or len(stack) != 6:
         if mean_alpha:
             return np.repeat(np.nan, 4)
         else:
@@ -313,8 +313,10 @@ def uavsar_H_A_alpha(stack, parralel = False, mean_alpha=True):
         output arrays will match rows/cols of the input stack.
     """
     if parralel:
-        res = np.apply_along_axis(decomp_components, mean_alpha=mean_alpha, 
-                              axis=2, arr=stack)
+        import dask.array as da
+        # res = np.apply_along_axis(decomp_components, mean_alpha=mean_alpha, 
+        #                       axis=2, arr=stack)
+        res = da.apply_along_axis(decomp_components, axis = 2, arr = stack, dtype = stack.dtype).compute()
     else:
         res_shape = list(stack.shape[:2])
         res_shape.append(4)
