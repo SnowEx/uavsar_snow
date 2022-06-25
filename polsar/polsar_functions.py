@@ -11,6 +11,11 @@ import math
 import numpy as np
 from glob import glob
 from os.path import join, basename
+from tqdm import tqdm
+
+import rasterio
+from rasterio.crs import CRS
+from rasterio.transform import Affine
 
 from uavsar_pytools.convert.tiff_conversion import read_annotation # array_to_tiff
 
@@ -287,7 +292,7 @@ def decomp_components(stack, mean_alpha=True):
         return H, A, alpha1
     
 
-def uavsar_H_A_alpha(stack, mean_alpha=True):
+def uavsar_H_A_alpha(stack, parralel = False, mean_alpha=True):
     """
     Apply-along-axis version of decomp_products function. This function can be 
     used to perform H-A-alpha decomposition on a full UAVSAR scene. 
@@ -307,13 +312,21 @@ def uavsar_H_A_alpha(stack, mean_alpha=True):
         Decomposition products calculated for the input scene. Size of all
         output arrays will match rows/cols of the input stack.
     """
-    out = np.apply_along_axis(decomp_components, mean_alpha=mean_alpha, 
+    if parralel:
+        res = np.apply_along_axis(decomp_components, mean_alpha=mean_alpha, 
                               axis=2, arr=stack)
-    H = out[:,:,0]
-    A = out[:,:,1]
-    alpha1 = out[:,:,2]
-    if out.shape[-1] > 3:
-        mean_alpha = out[:,:,3]
+    else:
+        res_shape = list(stack.shape[:2])
+        res_shape.append(4)
+        res = np.empty(res_shape)
+        iters = stack.shape[0]*stack.shape[1]
+        for i, j in tqdm(np.ndindex(stack.shape[:2]), total = iters):
+            res[i,j,:] = decomp_components(stack[i,j])
+    H = res[:,:,0]
+    A = res[:,:,1]
+    alpha1 = res[:,:,2]
+    if mean_alpha:
+        mean_alpha = res[:,:,3]
         return H, A, alpha1, mean_alpha
     else:
         return H, A, alpha1
