@@ -1,5 +1,5 @@
 # uavsar_snow
-Code for using UAVSAR imagery in Snow Water Estimations.
+Code for using UAVSAR InSAR and PolSAR data for snow applications.
 
 Contributors: Zachary Keskinen (Boise State University), Naheem Adebisi (Boise State University), Ross Palomaki (Montana State University), Jack Tarricone (University of Nevada, Reno). \
 \
